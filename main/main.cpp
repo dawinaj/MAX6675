@@ -1,17 +1,15 @@
-#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
-
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <driver/gpio.h>
 
-#include "MCP3XXX.h"
+#include "MAX6675.h"
 
-static const char *TAG = "MCP_Test";
+static const char *TAG = "Test";
 
 void init_spi()
 {
 	spi_bus_config_t bus_cfg = {
-		.mosi_io_num = GPIO_NUM_23,
+		.mosi_io_num = GPIO_NUM_NC, // GPIO_NUM_23,
 		.miso_io_num = GPIO_NUM_19,
 		.sclk_io_num = GPIO_NUM_18,
 		.quadwp_io_num = GPIO_NUM_NC,
@@ -29,15 +27,17 @@ void init_spi()
 
 extern "C" void app_main(void)
 {
-	esp_log_level_set("*", ESP_LOG_VERBOSE);
-	ESP_LOGI(TAG, "H E N L O B E N C");
-	vTaskDelay(pdMS_TO_TICKS(1000));
-
 	init_spi();
 
-	MCP3204 adc(SPI3_HOST, GPIO_NUM_5);
+	MAX6675 tc(SPI3_HOST, GPIO_NUM_5);
+	tc.init();
 
-	float voltage = adc.get_float_volt(0);
+	while (true)
+	{
+		float tempc = tc.get_float_celsius();
+		ESP_LOGI(TAG, "Temp: %f *C", tempc);
+		vTaskDelay(pdMS_TO_TICKS(500));
+	}
 
-	ESP_LOGI("MCP3XXX", "Voltage: %f V", voltage);
+	tc.deinit();
 }
